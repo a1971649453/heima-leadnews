@@ -101,6 +101,7 @@ public class AppJwtUtil {
     }
 
     public static void main(String[] args) {
+        //day01
         String token = AppJwtUtil.getToken(1L);
         System.out.println(token);
         try {
