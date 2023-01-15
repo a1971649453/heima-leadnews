@@ -1,0 +1,3 @@
+#自动配置 其他微服务引入依赖即可使用
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.heima.knife4j.config.Swagger2Configuration
