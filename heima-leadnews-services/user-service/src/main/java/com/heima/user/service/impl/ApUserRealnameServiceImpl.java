@@ -21,6 +21,7 @@ import com.heima.model.wemedia.pojos.WmUser;
 import com.heima.user.mapper.ApUserMapper;
 import com.heima.user.mapper.ApUserRealnameMapper;
 import com.heima.user.service.ApUserRealnameService;
+import io.seata.spring.annotation.GlobalTransactional;
 import jdk.nashorn.internal.ir.annotations.Reference;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,8 @@ public class ApUserRealnameServiceImpl extends ServiceImpl<ApUserRealnameMapper,
     @Resource
     private ApUserMapper apUserMapper;
 
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class,timeoutMills = 300000)
+//    @Transactional(rollbackFor = Exception.class)
     @Override
     public ResponseResult updateStatusById(AuthDTO dto, Short status) {
         // 1.校验dto中id 参数 不能为空
@@ -87,7 +89,7 @@ public class ApUserRealnameServiceImpl extends ServiceImpl<ApUserRealnameMapper,
         }
         // 执行修改
         updateById(userRealname);
-        // 5.判断状态是否为9 审核成功
+        // 5.判断状态是否为9 审核成功 如果是2则直接返回成功
         if (status.equals(AdminConstants.FAIL_AUTH)){
             return ResponseResult.okResult();
         }
@@ -98,6 +100,11 @@ public class ApUserRealnameServiceImpl extends ServiceImpl<ApUserRealnameMapper,
         // 8. TODO 创建作者信息(查询是否已经创建) qp_author
         createApAuthor(apUser,wmUser);
 
+
+        //演示分布式事务问题
+        if (dto.getId() == 5){
+            CustException.cust(AppHttpCodeEnum.PARAM_INVALID,"演示异常");
+        }
         return ResponseResult.okResult();
     }
 

@@ -1,7 +1,8 @@
-package com.heima.wemedia.controller;
+package com.heima.wemedia.controller.v1;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.wemedia.dtos.WmMaterialDTO;
 import com.heima.model.wemedia.pojos.WmUser;
 import com.heima.wemedia.service.WmUserService;
 import io.swagger.annotations.Api;
@@ -41,5 +42,7 @@ public class WmUserController {
 
         return ResponseResult.okResult(wmUser);
     }
+
+
 
 }

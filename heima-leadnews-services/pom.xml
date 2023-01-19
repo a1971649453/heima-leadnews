@@ -19,6 +19,8 @@
     <packaging>pom</packaging>
 
     <dependencies>
+        
+
         <!--引入统一feign接口-->
         <dependency>
             <groupId>com.heima</groupId>
