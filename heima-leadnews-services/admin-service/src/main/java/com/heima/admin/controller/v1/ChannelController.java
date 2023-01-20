@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author 金宗文
@@ -23,6 +24,13 @@ public class ChannelController {
 
     @Resource
     private ChannelService channelService;
+
+    @ApiOperation("查询全部频道")
+    @GetMapping("/channels")
+    public ResponseResult findAll() {
+        List<AdChannel> list = channelService.list();
+        return ResponseResult.okResult(list);
+    }
 
     /**
      * 根据名称分页查询频道列表

@@ -113,7 +113,7 @@ public class WmMaterialServiceImpl extends ServiceImpl<WmMaterialMapper, WmMater
        // 将url补全
         for (WmMaterial record : records) {
             record.setUrl(webSite + record.getUrl());
-            System.out.println( record.getUrl());
+//            System.out.println( record.getUrl());
         }
 
         // 3.数据返回
@@ -161,8 +161,7 @@ public class WmMaterialServiceImpl extends ServiceImpl<WmMaterialMapper, WmMater
     @Override
     public ResponseResult updateStatus(Integer id, Short type) {
         //1.参数检验
-        if (id == null){
-            CustException.cust(AppHttpCodeEnum.PARAM_INVALID,"素材id不能为空");
+        if (id == null){            CustException.cust(AppHttpCodeEnum.PARAM_INVALID,"素材id不能为空");
         }
         // 2.查询数据库中是否存在此id的素材
         WmMaterial wmMaterial = this.getById(id);
