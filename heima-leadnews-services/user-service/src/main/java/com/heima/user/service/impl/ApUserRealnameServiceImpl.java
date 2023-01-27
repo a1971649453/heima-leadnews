@@ -95,9 +95,9 @@ public class ApUserRealnameServiceImpl extends ServiceImpl<ApUserRealnameMapper,
         }
         // 6.如果为9 审核成功
 
-        // 7.Todo 开通自媒体账户 wm_user
+        // 7. 开通自媒体账户 wm_user
         WmUser wmUser = createWmUser(apUser);
-        // 8. TODO 创建作者信息(查询是否已经创建) qp_author
+        // 8. 创建作者信息(查询是否已经创建) qp_author
         createApAuthor(apUser,wmUser);
 
 

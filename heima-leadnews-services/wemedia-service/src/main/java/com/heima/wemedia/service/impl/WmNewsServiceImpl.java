@@ -23,6 +23,7 @@ import com.heima.model.wemedia.vo.WmNewsVO;
 import com.heima.wemedia.mapper.WmMaterialMapper;
 import com.heima.wemedia.mapper.WmNewsMapper;
 import com.heima.wemedia.mapper.WmNewsMaterialMapper;
+import com.heima.wemedia.mapper.WmUserMapper;
 import com.heima.wemedia.service.WmNewsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -238,6 +239,63 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         PageResponseResult result = new PageResponseResult(dto.getPage(), dto.getSize(), count, listAndPage);
         result.setHost(webSite);
         return result;
+    }
+
+    @Resource
+    WmUserMapper wmUserMapper;
+    @Override
+    public ResponseResult findWmNewsVo(Integer id) {
+        //参数检验
+        if (id == null) {
+            CustException.cust(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //2.根据id查询文章
+        WmNews wmNews = this.getById(id);
+        //3.判断文章是否存在
+        if (wmNews == null) {
+            CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST);
+        }
+
+        //4.查询文章作者
+        Integer userId = wmNews.getUserId();
+        WmUser wmUser = wmUserMapper.selectById(userId);
+
+        //封装返回结果
+        WmNewsVO wmNewsVO = new WmNewsVO();
+        BeanUtils.copyProperties(wmNews,wmNewsVO);
+        if(wmUser != null){
+            wmNewsVO.setAuthorName(wmUser.getName());
+        }
+        ResponseResult responseResult = ResponseResult.okResult(wmNewsVO);
+        responseResult.setHost(webSite);
+        return responseResult;
+    }
+
+    /**
+     * 自媒体文章人工审核
+     * @param status 2  审核失败  4 审核成功
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult updateStatus(Short status, NewsAuthDTO dto) {
+        //1.检查参数
+        if (dto == null || dto.getId() == null) {
+            CustException.cust(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        WmNews wmNews = this.getById(dto.getId());
+        if (wmNews == null) {
+            CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST);
+        }
+        //2.文章不能为已发布状态
+        if (wmNews.getStatus().equals(WmNews.Status.PUBLISHED.getCode())) {
+            CustException.cust(AppHttpCodeEnum.DATA_NOT_ALLOW,"文章已发布，不能再次审核");
+        }
+        //3.更新状态
+        wmNews.setStatus(status);
+        updateById(wmNews);
+        // TODO 通知定时发布文章
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 
     /**
