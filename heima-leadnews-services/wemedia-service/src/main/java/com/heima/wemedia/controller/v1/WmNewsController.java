@@ -1,5 +1,6 @@
 package com.heima.wemedia.controller.v1;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.wemedia.dtos.NewsAuthDTO;
 import com.heima.model.wemedia.dtos.WmNewsDTO;
 import com.heima.model.wemedia.dtos.WmNewsPageReqDTO;
 import com.heima.wemedia.service.WmNewsService;
@@ -42,5 +43,18 @@ public class WmNewsController {
     @PostMapping("/down_or_up")
     public ResponseResult downOrUp(@RequestBody WmNewsDTO dto) {
         return wmNewsService.downOrUp(dto);
+    }
+
+    /**
+     * 查询文章列表
+     * @param dto
+     * @return
+     * 1、按照创建时间降序
+     * 2、后端查询的文章不应该包含草稿
+     */
+    @ApiOperation(value = "查询自媒体文章列表",notes = "返回值带作者信息，主要运营管理端调用")
+    @PostMapping("/list_vo")
+    public ResponseResult findList(@RequestBody NewsAuthDTO dto) {
+        return wmNewsService.findList(dto);
     }
 }

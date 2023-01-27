@@ -174,9 +174,6 @@ public class WmMaterialServiceImpl extends ServiceImpl<WmMaterialMapper, WmMater
            CustException.cust(AppHttpCodeEnum.DATA_NOT_ALLOW, "此素材不属于当前用户");
        }
 
-
-
-
         // 3.修改收藏状态
         wmMaterial.setIsCollection(type);
         this.updateById(wmMaterial);

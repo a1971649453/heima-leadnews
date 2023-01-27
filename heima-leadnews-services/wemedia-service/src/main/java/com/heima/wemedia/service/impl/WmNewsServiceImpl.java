@@ -7,25 +7,31 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.common.exception.CustException;
+import com.heima.model.common.constants.message.NewsAutoScanConstants;
 import com.heima.model.common.constants.wemedia.WemediaConstants;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.threadlocal.WmThreadLocalUtils;
+import com.heima.model.wemedia.dtos.NewsAuthDTO;
 import com.heima.model.wemedia.dtos.WmNewsDTO;
 import com.heima.model.wemedia.dtos.WmNewsPageReqDTO;
 import com.heima.model.wemedia.pojos.WmNews;
 import com.heima.model.wemedia.pojos.WmNewsMaterial;
 import com.heima.model.wemedia.pojos.WmUser;
+import com.heima.model.wemedia.vo.WmNewsVO;
 import com.heima.wemedia.mapper.WmMaterialMapper;
 import com.heima.wemedia.mapper.WmNewsMapper;
 import com.heima.wemedia.mapper.WmNewsMaterialMapper;
 import com.heima.wemedia.service.WmNewsService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -39,7 +45,11 @@ import java.util.stream.Collectors;
  * @version 1.0
  */
 @Service
+@Slf4j
 public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> implements WmNewsService {
+
+    @Resource
+    RabbitTemplate rabbitTemplate;
 
     @Value("${file.oss.web-site}")
     String webSite;
@@ -87,6 +97,8 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         return result;
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public ResponseResult submitNews(WmNewsDTO dto) {
         //1.参数校验
@@ -114,14 +126,19 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         if (dto.getStatus().equals(WemediaConstants.WM_NEWS_DRAFT_STATUS)){
             return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
         }
-        // TODO 3.1 抽取文章中关联的图片路径
+        //  3.1 抽取文章中关联的图片路径
         List<String> materials = parseContentImages(dto.getContent());
-        // TODO 3.2 关联文章内容中的图片和素材关系
+        //  3.2 关联文章内容中的图片和素材关系
         if (!CollectionUtils.isEmpty(materials)) {
             saveRelativeInfo(materials, wmNews.getId(),WemediaConstants.WM_CONTENT_REFERENCE);
         }
-        // TODO 3.3 关联文章封面中的图片和素材关系  封面可能是选择自动或者是无图
+        //  3.3 关联文章封面中的图片和素材关系  封面可能是选择自动或者是无图
         saveRelativeInfoForCover(dto,materials, wmNews);
+
+        //  3.4 发送待审核消息
+        rabbitTemplate.convertAndSend(NewsAutoScanConstants.WM_NEWS_AUTO_SCAN_QUEUE,wmNews.getId());
+        log.info("发送待审核消息成功 队列:{} id:{}",NewsAutoScanConstants.WM_NEWS_AUTO_SCAN_QUEUE,wmNews.getId());
+
         return ResponseResult.okResult();
     }
 
@@ -142,6 +159,7 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         return result;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public ResponseResult delNews(Integer id) {
         //1.校验参数
@@ -170,6 +188,7 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         return ResponseResult.okResult();
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public ResponseResult downOrUp(WmNewsDTO dto) {
         //1.检查参数
@@ -194,6 +213,31 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         update(Wrappers.<WmNews>lambdaUpdate().eq(WmNews::getId,dto.getId())
                 .set(WmNews::getEnable,dto.getEnable()));
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
+    }
+
+    @Resource
+    WmNewsMapper wmNewsMapper;
+    @Override
+    public ResponseResult findList(NewsAuthDTO dto) {
+        //1.检查参数
+        if (dto == null) {
+            CustException.cust(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        dto.checkParam();
+        //2.设置分页参数
+        Integer currentPage = dto.getPage();
+        dto.setPage((currentPage-1)*dto.getSize());
+        if(StringUtils.isNotBlank(dto.getTitle())){
+            dto.setTitle("%"+dto.getTitle()+"%");
+        }
+        //3.分页查询
+        List<WmNewsVO> listAndPage = wmNewsMapper.findListAndPage(dto);
+        //统计数据
+        long count = wmNewsMapper.findListCount(dto);
+        //返回结果
+        PageResponseResult result = new PageResponseResult(dto.getPage(), dto.getSize(), count, listAndPage);
+        result.setHost(webSite);
+        return result;
     }
 
     /**

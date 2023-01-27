@@ -7,6 +7,8 @@ import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.admin.pojo.AdSensitive;
 import com.heima.model.common.dtos.ResponseResult;
 
+import java.util.List;
+
 /**
  * @author 金宗文
  * @version 1.0
@@ -40,4 +42,10 @@ public interface AdSensitiveService extends IService<AdSensitive> {
      * @return
      */
     public ResponseResult delete(Integer id);
+
+    /**
+     * 查询敏感词内容列表
+     * @return
+     */
+    public ResponseResult<List<String>> selectAllSensitives();
 }

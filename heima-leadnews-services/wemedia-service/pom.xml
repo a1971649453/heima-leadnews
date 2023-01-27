@@ -17,6 +17,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
+        <!--RabbitMQ-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <!--引入阿里云内容安全审核依赖-->
+        <dependency>
+            <groupId>com.heima</groupId>
+            <artifactId>heima-aliyunsecurity-spring-boot-starter</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!--阿里云对象存储依赖-->
         <dependency>
             <artifactId>heima-file-spring-boot-starter</artifactId>
             <groupId>com.heima</groupId>

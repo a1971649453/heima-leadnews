@@ -43,6 +43,4 @@ public class WmUserController {
         return ResponseResult.okResult(wmUser);
     }
 
-
-
 }
