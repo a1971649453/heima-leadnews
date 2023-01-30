@@ -91,4 +91,15 @@ public class WmNewsController {
     public ResponseResult authFail(@RequestBody NewsAuthDTO dto) {
         return wmNewsService.updateStatus(WmNews.Status.FAIL.getCode(),dto);
     }
+    /**
+     * 修改文章
+     * @param wmNews
+     * @return
+     */
+    @ApiOperation("根据id修改自媒体文章")
+    @PutMapping("/update")
+    public ResponseResult updateWmNews(@RequestBody WmNews wmNews) {
+        wmNewsService.updateById(wmNews);
+        return ResponseResult.okResult();
+    }
 }

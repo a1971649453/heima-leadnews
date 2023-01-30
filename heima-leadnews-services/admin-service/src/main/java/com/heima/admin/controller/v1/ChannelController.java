@@ -76,5 +76,9 @@ public class ChannelController {
         return channelService.deleteById(id);
     }
 
-
+    @ApiOperation("根据id查询频道")
+    @GetMapping("/one/{id}")
+    public ResponseResult findOne(@PathVariable Integer id) {
+        return ResponseResult.okResult(channelService.getById(id));
+    }
 }

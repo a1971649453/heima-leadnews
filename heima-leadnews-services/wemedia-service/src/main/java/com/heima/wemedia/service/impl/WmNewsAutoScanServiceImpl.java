@@ -6,6 +6,7 @@ import com.heima.aliyun.scan.GreenScan;
 import com.heima.aliyun.scan.ScanResult;
 import com.heima.common.exception.CustException;
 import com.heima.feigns.AdminFeign;
+import com.heima.model.common.constants.message.PublishArticleConstants;
 import com.heima.model.common.constants.wemedia.WemediaConstants;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
@@ -15,11 +16,14 @@ import com.heima.wemedia.mapper.WmNewsMapper;
 import com.heima.wemedia.service.WmNewsAutoScanService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jdom2.internal.SystemProperty;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +44,9 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
     GreenScan greenScan;
     @Value("${file.oss.web-site}")
     String webSite;
+
+    @Resource
+    RabbitTemplate rabbitTemplate;
     @Override
     public void autoScanWmNews(Integer id) {
         log.info("文章自动审核方法触发 待审核的文章id为: {} ",id);
@@ -88,12 +95,22 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
             }
         }
 
-
-
         //8.  将文章状态改为8
         updateWmNews(WmNews.Status.SUCCESS.getCode(), "审核通过",wmNews);
 
-        //9. TODO 根据文章发布时间,发布延迟消息,用于定时发布文章(9 已发布)
+        //9.  根据文章发布时间,发布延迟消息,用于定时发布文章(9 已发布)
+        //获取发布时间
+        long publishTime = wmNews.getPublishTime().getTime();
+        //当前时间
+        long currentTime = System.currentTimeMillis();
+        long remainTime = publishTime - currentTime;
+        //发布文章
+        rabbitTemplate.convertAndSend(PublishArticleConstants.DELAY_DIRECT_EXCHANGE,PublishArticleConstants.PUBLISH_ARTICLE_ROUTE_KEY,
+                wmNews.getId(),(message -> {message.getMessageProperties().setHeader("x-delay",remainTime <= 0 ? 0: remainTime);
+                return message;
+                }
+        ));
+        log.info("成功发送文章延迟发布消息 文章id:{},当前时间:{}",wmNews.getId(), LocalDateTime.now());
 
     }
 
@@ -197,7 +214,6 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
             updateWmNews(WmNews.Status.FAIL.getCode(),"内容中包涵敏感词: " + map ,wmNews);
             flag = false;
         }
-
         return flag;
     }
 

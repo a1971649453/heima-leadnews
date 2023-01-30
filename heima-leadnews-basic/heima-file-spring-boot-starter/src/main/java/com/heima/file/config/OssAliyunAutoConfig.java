@@ -12,6 +12,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+
 /***
  * @description Oss文件存储服务器
  * @return
@@ -21,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({OssAliyunConfigProperties.class})
 //当引入FileStorageService接口时
 @ConditionalOnClass({OSSClient.class})
+@Primary
 public class OssAliyunAutoConfig {
 	@Autowired
 	OssAliyunConfigProperties ossAliyunConfigField;

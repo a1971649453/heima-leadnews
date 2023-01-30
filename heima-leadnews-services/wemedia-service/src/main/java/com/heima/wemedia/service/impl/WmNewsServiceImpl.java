@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.common.exception.CustException;
 import com.heima.model.common.constants.message.NewsAutoScanConstants;
+import com.heima.model.common.constants.message.NewsUpOrDownConstants;
+import com.heima.model.common.constants.message.PublishArticleConstants;
 import com.heima.model.common.constants.wemedia.WemediaConstants;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
@@ -36,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -213,6 +216,17 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         //4.修改文章状态，同步到app端（后期做）TODO
         update(Wrappers.<WmNews>lambdaUpdate().eq(WmNews::getId,dto.getId())
                 .set(WmNews::getEnable,dto.getEnable()));
+
+        // 上下架消息发送
+        if (WemediaConstants.WM_NEWS_UP.equals(dto.getEnable())){
+            // 上架
+            rabbitTemplate.convertAndSend(NewsUpOrDownConstants.NEWS_UP_OR_DOWN_EXCHANGE,NewsUpOrDownConstants.NEWS_UP_ROUTE_KEY,wmNews.getArticleId());
+            log.info("成功发送文章上架消息 文章ID:{}",wmNews.getArticleId());
+        }else {
+            // 下架
+            rabbitTemplate.convertAndSend(NewsUpOrDownConstants.NEWS_UP_OR_DOWN_EXCHANGE,NewsUpOrDownConstants.NEWS_DOWN_ROUTE_KEY,wmNews.getArticleId());
+            log.info("成功发送文章下架消息 文章ID:{}",wmNews.getArticleId());
+        }
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 
@@ -294,7 +308,19 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         //3.更新状态
         wmNews.setStatus(status);
         updateById(wmNews);
-        // TODO 通知定时发布文章
+        //  通知定时发布文章
+        //获取发布时间
+        long publishTime = wmNews.getPublishTime().getTime();
+        //当前时间
+        long currentTime = System.currentTimeMillis();
+        long remainTime = publishTime - currentTime;
+        //发布文章
+        rabbitTemplate.convertAndSend(PublishArticleConstants.DELAY_DIRECT_EXCHANGE,PublishArticleConstants.PUBLISH_ARTICLE_ROUTE_KEY,
+                wmNews.getId(),(message -> {message.getMessageProperties().setHeader("x-delay",remainTime <= 0 ? 0: remainTime);
+                    return message;
+                }
+                ));
+        log.info("成功发送文章延迟发布消息 文章id:{},当前时间:{}",wmNews.getId(), LocalDateTime.now());
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 

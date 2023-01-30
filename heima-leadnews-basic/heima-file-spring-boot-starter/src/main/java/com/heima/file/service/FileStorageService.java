@@ -28,7 +28,7 @@ public interface FileStorageService {
      * @param inputStream 文件流
      * @return pathUrl 全路径
      */
-    String store(String prefix, String filename, String contentType, InputStream inputStream);
+    String store(String prefix, String filename,String contentType,  InputStream inputStream);
 
     /**
      * @Description 文件删除
