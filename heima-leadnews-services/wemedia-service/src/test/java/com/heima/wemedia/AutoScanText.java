@@ -1,4 +1,4 @@
-package com.heima;
+package com.heima.wemedia;
 
 import com.heima.wemedia.service.WmNewsAutoScanService;
 import org.junit.jupiter.api.Test;

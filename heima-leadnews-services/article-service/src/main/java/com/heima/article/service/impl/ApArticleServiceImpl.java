@@ -7,24 +7,32 @@ import com.heima.article.mapper.ApArticleContentMapper;
 import com.heima.article.mapper.ApArticleMapper;
 import com.heima.article.mapper.AuthorMapper;
 import com.heima.article.service.ApArticleService;
+import com.heima.article.service.GeneratePageService;
 import com.heima.common.exception.CustException;
 import com.heima.feigns.AdminFeign;
 import com.heima.feigns.WemediaFeign;
 import com.heima.model.admin.pojo.AdChannel;
+import com.heima.model.article.dtos.ArticleHomeDTO;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApArticleConfig;
 import com.heima.model.article.pojos.ApArticleContent;
 import com.heima.model.article.pojos.ApAuthor;
+import com.heima.model.common.constants.article.ArticleConstants;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.wemedia.pojos.WmNews;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -44,6 +52,20 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
 
     @Resource
     ApArticleContentMapper apArticleContentMapper;
+
+    @Resource
+    ApArticleMapper apArticleMapper;
+
+    @Value("${file.oss.web-site}")
+    String WebSite;
+
+    @Value("${file.minio.readPath}")
+    private String readPath;
+
+
+    @Resource
+    GeneratePageService generatePageService;
+
     @Override
     @GlobalTransactional(rollbackFor = Exception.class,timeoutMills = 300000)
     public void publishArticle(Integer newsId) {
@@ -56,11 +78,45 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         saveOrUpdateArticle(apArticle);
         // 4.保存关联的配置信息 和 内容信息
         saveConfigAndContent(wmNews,apArticle);
-        // 5.TODO 基于新的文章内容生成 html静态页
-
+        // 5.基于新的文章内容生成 html静态页
+        generatePageService.generateArticlePage(wmNews.getContent(), apArticle);
         // 6.修改更新WmNews状态 9
         updateWmNews(wmNews,apArticle);
         // 7.TODO 通知ES更新索引库
+    }
+
+    @Override
+    public ResponseResult load(Short loadtype, ArticleHomeDTO dto) {
+        // 1.检查参数(分页 时间 类型 频道)
+        Integer size = dto.getSize();
+        if (size == null || size <= 0){
+            dto.setSize(10);
+        }
+        if (dto.getMinBehotTime() == null){
+            dto.setMinBehotTime(new Date());
+        }
+        if (dto.getMaxBehotTime() == null){
+            dto.setMaxBehotTime(new Date());
+        }
+        if (StringUtils.isBlank(dto.getTag())){
+            dto.setTag(ArticleConstants.DEFAULT_TAG);
+        }
+        if (!loadtype.equals(ArticleConstants.LOADTYPE_LOAD_MORE) && !loadtype.equals(ArticleConstants.LOADTYPE_LOAD_NEW)){
+            loadtype = ArticleConstants.LOADTYPE_LOAD_MORE;
+        }
+//        2.调用mapper查询
+        List<ApArticle> articleList = apArticleMapper.loadArticleList(dto, loadtype);
+        // 3.返还结果 (封面需要拼接访问前缀)
+        for (ApArticle apArticle : articleList) {
+            String images = apArticle.getImages();
+            if (StringUtils.isNotBlank(images)){
+                images = Arrays.stream(images.split(",")).map(image -> WebSite + image).collect(Collectors.joining(","));
+
+                apArticle.setImages(images);
+            }
+            apArticle.setStaticUrl(readPath + apArticle.getStaticUrl());
+        }
+        return ResponseResult.okResult(articleList);
     }
 
 

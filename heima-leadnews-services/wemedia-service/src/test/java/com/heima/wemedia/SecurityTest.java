@@ -1,4 +1,4 @@
-package com.heima;
+package com.heima.wemedia;
 
 import com.google.j2objc.annotations.ReflectionSupport;
 import com.heima.aliyun.scan.GreenScan;

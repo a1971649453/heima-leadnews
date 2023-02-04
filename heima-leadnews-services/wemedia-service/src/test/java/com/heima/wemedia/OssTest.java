@@ -1,4 +1,4 @@
-package com.heima;
+package com.heima.wemedia;
 
 import com.heima.file.service.FileStorageService;
 import com.heima.wemedia.WemediaApplication;
