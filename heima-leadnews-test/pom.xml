@@ -10,6 +10,7 @@
     <modules>
         <module>aliyun-safe-demo</module>
         <module>freenarker-demo</module>
+        <module>mongodb-test</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>heima-leadnews-test</artifactId>

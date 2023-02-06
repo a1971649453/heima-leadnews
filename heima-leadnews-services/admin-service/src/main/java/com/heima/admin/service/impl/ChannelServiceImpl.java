@@ -71,15 +71,15 @@ public class ChannelServiceImpl extends ServiceImpl<ChannelMapper, AdChannel> im
      */
     @Override
     public ResponseResult insert(AdChannel adchannel) {
-        //1.参数校验 频道名称不能为空,
-        if (adchannel == null || StringUtils.isBlank(adchannel.getName())){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_REQUIRE);
-        }
+        //1.参数校验 频道名称不能为空, 已经使用@Validated
+//        if (adchannel == null || StringUtils.isBlank(adchannel.getName())){
+//            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_REQUIRE);
+//        }
 
         //2.不能大于10个字符 且频道名称不可以重复
-        if (adchannel.getName().length() > 10){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"频道名称不能大于10个字符");
-        }
+//        if (adchannel.getName().length() > 10){
+//            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"频道名称不能大于10个字符");
+//        }
         // 查找出此频道名称的数量
         int count = this.count(Wrappers.<AdChannel>lambdaQuery().eq(AdChannel::getName, adchannel.getName()));
         if (count > 0){

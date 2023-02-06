@@ -4,9 +4,12 @@ import com.heima.admin.service.ChannelService;
 import com.heima.model.admin.Dtos.ChannelDTO;
 import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.common.validator.ValidatorAdd;
+import com.heima.model.common.validator.ValidatorUpdate;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -50,7 +53,7 @@ public class ChannelController {
      */
     @PostMapping("/save")
     @ApiOperation("保存频道信息")
-    public ResponseResult insert(@RequestBody AdChannel channel){
+    public ResponseResult insert(@RequestBody @Validated(ValidatorAdd.class) AdChannel channel){
         return channelService.insert(channel);
     }
 
@@ -61,7 +64,7 @@ public class ChannelController {
      */
     @ApiOperation("频道修改")
     @PostMapping("/update")
-    public ResponseResult update(@RequestBody AdChannel adChannel) {
+    public ResponseResult update(@RequestBody @Validated(ValidatorUpdate.class) AdChannel adChannel) {
         return channelService.update(adChannel);
     }
 

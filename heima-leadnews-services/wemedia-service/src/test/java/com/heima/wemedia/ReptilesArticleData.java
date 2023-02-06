@@ -63,7 +63,7 @@ public class ReptilesArticleData {
     public void initDriver(){
         System.setProperty("webdriver.chrome.driver", "D:\\coding\\Software\\chromedriver_win32\\chromedriver.exe");
         WebDriver driver = new ChromeDriver();
-        driver.get("https://3g.163.com/touch/sports?ver=c");
+        driver.get("https://3g.163.com/touch/ent/sub/star?ver=c&clickfrom=index2018_header_main");
         document = Jsoup.parse(driver.getPageSource());
     }
 
@@ -80,6 +80,7 @@ public class ReptilesArticleData {
         // 获取网易新闻数据
         // 娱乐频道:https://3g.163.com/touch/ent/?ver=c&clickfrom=index2018_header_main
 //        String url = "https://3g.163.com/touch/ent/?ver=c&clickfrom=index2018_header_main";
+        // 明星https://3g.163.com/touch/ent/sub/star?ver=c&clickfrom=index2018_header_main
         //体育频道https://3g.163.com/touch/sports?ver=c
         // 获取该网页document文档数据
 //        Document document = Jsoup.connect(url)
@@ -148,7 +149,7 @@ public class ReptilesArticleData {
                     wmNewsDto.setImages(urlList);
                 }
                 //频道设置
-                wmNewsDto.setChannelId(11);
+                wmNewsDto.setChannelId(12);
                 try {
                     Thread.sleep(1000); // 睡眠1秒 让发布时间不一致
                 } catch (InterruptedException e) {
@@ -230,7 +231,7 @@ public class ReptilesArticleData {
      * @return
      */
     private List<Map> parseContent(String href)  {
-        String url="http:"+href;
+        String url="https://3g.163.com"+href;
         List<Map> contentMap = new ArrayList<>();
         Document document = null;
         try {
