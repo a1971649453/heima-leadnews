@@ -32,6 +32,14 @@ public class ArticleFeignFallback implements FallbackFactory<ArticleFeign> {
                 log.error("ArticleFeign save 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
                 return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
             }
+
+            @Override
+            public ResponseResult findArticleById(Long articleId) {
+                log.error("参数 articleId: {}",articleId);
+                log.error("ArticleFeign save 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
+                return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
+            }
+
         };
     }
 }

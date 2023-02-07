@@ -1,4 +1,4 @@
-package com.heima.user.controller;
+package com.heima.user.controller.v1;
 
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.user.dtos.LoginDTO;
