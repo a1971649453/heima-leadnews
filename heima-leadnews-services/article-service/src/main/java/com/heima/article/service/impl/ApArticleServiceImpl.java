@@ -1,5 +1,6 @@
 package com.heima.article.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.article.mapper.ApArticleConfigMapper;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -108,17 +110,39 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         List<ApArticle> articleList = apArticleMapper.loadArticleList(dto, loadtype);
         // 3.返还结果 (封面需要拼接访问前缀)
         for (ApArticle apArticle : articleList) {
-            String images = apArticle.getImages();
-            if (StringUtils.isNotBlank(images)){
-                images = Arrays.stream(images.split(",")).map(image -> WebSite + image).collect(Collectors.joining(","));
-
-                apArticle.setImages(images);
-            }
-            apArticle.setStaticUrl(readPath + apArticle.getStaticUrl());
+            parseArticle(apArticle);
         }
         return ResponseResult.okResult(articleList);
     }
 
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
+    @Override
+    public ResponseResult load2(Short loadType, ArticleHomeDTO dto, boolean firstPage) {
+        if (firstPage){
+            // 从Redis缓存中 查询热点数据
+            String articleListJson = stringRedisTemplate.opsForValue().get(ArticleConstants.HOT_ARTICLE_FIRST_PAGE + dto.getTag());
+            if (StringUtils.isNotBlank(articleListJson)) {
+                //转为集合
+                List<ApArticle> articleList = JSON.parseArray(articleListJson, ApArticle.class);
+                return ResponseResult.okResult(articleList);
+            }
+        }
+
+        return load(loadType,dto);
+    }
+
+
+    public void parseArticle(ApArticle apArticle){
+        String images = apArticle.getImages();
+        if (StringUtils.isNotBlank(images)){
+            images = Arrays.stream(images.split(",")).map(image -> WebSite + image).collect(Collectors.joining(","));
+
+            apArticle.setImages(images);
+        }
+        apArticle.setStaticUrl(readPath + apArticle.getStaticUrl());
+
+    }
 
     /**
      * 查询自媒体文章

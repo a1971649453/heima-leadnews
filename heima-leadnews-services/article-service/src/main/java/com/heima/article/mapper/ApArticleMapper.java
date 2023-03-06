@@ -5,6 +5,7 @@ import com.heima.model.article.dtos.ArticleHomeDTO;
 import com.heima.model.article.pojos.ApArticle;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -17,4 +18,9 @@ public interface ApArticleMapper extends BaseMapper<ApArticle> {
      * @return
      */
     public List<ApArticle> loadArticleList(@Param("dto") ArticleHomeDTO dto, @Param("type") Short type);
+
+    @Select("select aa.* from ap_article aa left join ap_article_config aac on aa.id=aac.article_id " +
+            "where aac.is_delete!=1 and aac.is_down != 1 " +
+            "and aa.publish_time > #{beginDate}")
+    public List<ApArticle> selectArticleByDate(@Param("beginDate") String beginDate);
 }

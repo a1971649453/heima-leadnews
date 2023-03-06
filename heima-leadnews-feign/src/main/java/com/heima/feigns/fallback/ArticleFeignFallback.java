@@ -2,6 +2,7 @@ package com.heima.feigns.fallback;
 
 import com.heima.feigns.ArticleFeign;
 import com.heima.feigns.WemediaFeign;
+import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
@@ -9,6 +10,8 @@ import com.heima.model.wemedia.pojos.WmUser;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * @author 金宗文
@@ -39,7 +42,13 @@ public class ArticleFeignFallback implements FallbackFactory<ArticleFeign> {
                 log.error("ArticleFeign save 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
                 return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
             }
-
+            // ================新增降级方法  start ================
+            @Override
+            public ResponseResult<List<AdChannel>> selectChannels() {
+                log.error("AdminFeign selectChannels 远程调用出错啦 ~~~ !!!! {} ",throwable.getMessage());
+                return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
+            }
+            // ================新增降级方法  end ================
         };
     }
 }

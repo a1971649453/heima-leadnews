@@ -25,4 +25,9 @@ public interface AdminFeign {
 
     @GetMapping("/api/v1/channel/one/{id}")
     public ResponseResult<AdChannel> findOne(@PathVariable Integer id);
+
+    // ================新增接口方法  start ================
+    @GetMapping("/api/v1/channel/channels")
+    ResponseResult<List<AdChannel>> selectChannels();
+    // ================新增接口方法  end ================
 }

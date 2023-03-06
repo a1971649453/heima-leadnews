@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 @RestController
 @Slf4j
 @RequestMapping("/api/v1/comment")
-@Api("评论管理API")
+@Api(value = "评论管理API",tags = "评论管理API")
 public class CommentController {
     @Resource
     private CommentService commentService;
@@ -41,6 +41,7 @@ public class CommentController {
     }
 
     @PostMapping("/load")
+    @ApiOperation("加载文章评论列表")
     public ResponseResult findByArticleId(@RequestBody @Validated CommentDTO dto){
         return commentService.findByArticleId(dto);
     }

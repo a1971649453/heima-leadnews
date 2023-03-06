@@ -24,6 +24,9 @@ import com.heima.model.threadlocal.AppThreadLocalUtils;
 import com.heima.model.user.pojos.ApUser;
 import com.heima.model.wemedia.pojos.WmNews;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.Redisson;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -57,6 +60,8 @@ public class CommentServiceImpl implements CommentService {
     @Resource
     private CommentHotService commentHotService;
 
+    @Resource
+    private RedissonClient redisson;
     @Override
     public ResponseResult saveComment(CommentSaveDTO dto) {
         //1.校验是否登录 文章id不能为空 校验内容不能为空 校验内容长度不能大于140个字符 使用注解校验
@@ -113,51 +118,60 @@ public class CommentServiceImpl implements CommentService {
         if (user == null){
             return ResponseResult.errorResult(AppHttpCodeEnum.NEED_LOGIN);
         }
-        //2.根据评论ID查询评论数据 为null返回错误信息
-        ApComment apComment = mongoTemplate.findOne(Query.query(Criteria.where("id").is(dto.getCommentId())), ApComment.class);
-        if (apComment == null){
-            CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST,"当前评论不存在!");
-        }
+
+        ApComment apComment;
         Short operation = dto.getOperation();
         // 0点赞 1取消
         //3. 如果是点赞操作 判断是否已经点赞过  如果已经点赞过 请勿重复点赞
         ApCommentLike apCommentLike = mongoTemplate.findOne(
                 Query.query(Criteria.where("commentId").is(dto.getCommentId()).and("authorId").is(user.getId())), ApCommentLike.class);
-        if (operation == 0){
-            if (apCommentLike != null){
-                return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_ALLOW,"请勿重复点赞!");
-            }else {
-                // 保存点赞信息
-                apCommentLike = new ApCommentLike();
-                apCommentLike.setCommentId(dto.getCommentId());
-                apCommentLike.setAuthorId(user.getId());
-                mongoTemplate.save(apCommentLike);
-                //评论点赞数 +1
-                apComment.setLikes(apComment.getLikes() + 1);
-                mongoTemplate.save(apComment);
+        RLock lock = redisson.getLock("likes-lock");
+        //分布式锁
+        lock.lock();
+        try {
+            //2.根据评论ID查询评论数据 为null返回错误信息
+            apComment = mongoTemplate.findById(dto.getCommentId(),ApComment.class);
+            if (apComment == null){
+                CustException.cust(AppHttpCodeEnum.DATA_NOT_EXIST,"当前评论不存在!");
             }
-        }
-
-        //4. 如果是取消点赞操作 删除点赞信息 并修改评论的点赞数 -1 判断不能减到负数
-        if (operation == 1){
-            if (apCommentLike == null){
-                return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_ALLOW,"请勿重复取消点赞!");
-            }else {
-                // 删除点赞信息
-                mongoTemplate.remove(apCommentLike);
-                //评论点赞数 -1
-                if (apComment.getLikes() >= 1){
-                    apComment.setLikes(apComment.getLikes() - 1);
+            if (operation == 0) {
+//                if (apCommentLike != null) {
+//                    return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_ALLOW, "请勿重复点赞!");
+//                } else {
+                    // 保存点赞信息
+                    apCommentLike = new ApCommentLike();
+                    apCommentLike.setCommentId(dto.getCommentId());
+                    apCommentLike.setAuthorId(user.getId());
+                    mongoTemplate.save(apCommentLike);
+                    //评论点赞数 +1
+                    apComment.setLikes(apComment.getLikes() + 1);
                     mongoTemplate.save(apComment);
+//                }
+            }
+            //4. 如果是取消点赞操作 删除点赞信息 并修改评论的点赞数 -1 判断不能减到负数
+            if (operation == 1) {
+                if (apCommentLike == null) {
+                    return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_ALLOW, "请勿重复取消点赞!");
+                } else {
+                    // 删除点赞信息
+                    mongoTemplate.remove(apCommentLike);
+                    //评论点赞数 -1
+                    if (apComment.getLikes() >= 1) {
+                        apComment.setLikes(apComment.getLikes() - 1);
+                        mongoTemplate.save(apComment);
+                    }
                 }
             }
+        }
+        finally {
+            lock.unlock();
         }
 
 
         //5. 返回结果 需要返回点赞数量 likes:1
         Integer likes = apComment.getLikes();
         // 判断热点评论 点赞数大于等于10
-        if (likes >= 10){
+        if (likes >= 10 && apComment.getFlag() == 0){
             commentHotService.hotCommentExecutor(apComment);
         }
         Map<String, Integer> map = new HashMap<>();
