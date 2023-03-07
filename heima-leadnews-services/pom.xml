@@ -23,7 +23,12 @@
     <packaging>pom</packaging>
 
     <dependencies>
-        
+        <!--统一引入elk-->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>5.2</version>
+        </dependency>
 
         <!--引入统一feign接口-->
         <dependency>

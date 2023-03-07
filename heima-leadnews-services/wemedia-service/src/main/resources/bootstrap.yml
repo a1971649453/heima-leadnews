@@ -3,7 +3,7 @@ spring:
     name: leadnews-wemedia # 服务名称
   profiles:
     active: dev # 开发环境配置
-    ip: 192.168.200.130  # 环境ip地址
+    ip: 47.109.74.161  # 环境ip地址
   cloud:
     nacos:
       server-addr: ${spring.profiles.ip}:8848
@@ -19,13 +19,13 @@ spring:
             refresh: false   # 是否动态刷新，默认为false
           - data-id: share-seata.yml # 配置文件名-Data Id
             group: DEFAULT_GROUP   # 默认为DEFAULT_GROUP
-            refresh: false   # 是否动态刷新，默认为fals
+            refresh: false   # 是否动态刷新，默认为false
           - data-id: share-file.yml # 配置文件名-Data Id
             group: DEFAULT_GROUP   # 默认为DEFAULT_GROUP
             refresh: false   # 是否动态刷新，默认为false
           - data-id: share-rabbit.yml # 配置文件名-Data Id
             group: DEFAULT_GROUP   # 默认为DEFAULT_GROUP
-            refresh: false   # 是否动态刷新，默认为fals
+            refresh: false   # 是否动态刷新，默认为false
   servlet:
     multipart:
       max-file-size: 5MB

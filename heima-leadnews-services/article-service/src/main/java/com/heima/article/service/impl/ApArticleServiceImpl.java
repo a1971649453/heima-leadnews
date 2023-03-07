@@ -19,12 +19,14 @@ import com.heima.model.article.pojos.ApArticleConfig;
 import com.heima.model.article.pojos.ApArticleContent;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.constants.article.ArticleConstants;
+import com.heima.model.common.constants.message.NewsUpOrDownConstants;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.wemedia.pojos.WmNews;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -68,6 +70,9 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
     @Resource
     GeneratePageService generatePageService;
 
+    @Resource
+    RabbitTemplate rabbitTemplate;
+
     @Override
     @GlobalTransactional(rollbackFor = Exception.class,timeoutMills = 300000)
     public void publishArticle(Integer newsId) {
@@ -85,6 +90,9 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         // 6.修改更新WmNews状态 9
         updateWmNews(wmNews,apArticle);
         // 7.TODO 通知ES更新索引库
+        log.info("文章发布成功 并通知ES search微服务 更新索引库 ========{}",apArticle.getId());
+        rabbitTemplate.convertAndSend(NewsUpOrDownConstants.NEWS_UP_FOR_ES_QUEUE,apArticle.getId());
+
     }
 
     @Override
@@ -125,6 +133,9 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
             if (StringUtils.isNotBlank(articleListJson)) {
                 //转为集合
                 List<ApArticle> articleList = JSON.parseArray(articleListJson, ApArticle.class);
+                for (ApArticle article : articleList) {
+                    parseArticle(article);
+                }
                 return ResponseResult.okResult(articleList);
             }
         }

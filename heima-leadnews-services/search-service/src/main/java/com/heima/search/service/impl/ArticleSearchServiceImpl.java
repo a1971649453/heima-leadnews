@@ -8,6 +8,9 @@ import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.search.dtos.UserSearchDTO;
 import com.heima.model.search.vos.SearchArticleVO;
+import com.heima.model.threadlocal.AppThreadLocalUtils;
+import com.heima.model.user.pojos.ApUser;
+import com.heima.search.service.ApUserSearchService;
 import com.heima.search.service.ArticleSearchService;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -38,6 +41,9 @@ public class ArticleSearchServiceImpl implements ArticleSearchService {
     @Value("${file.oss.web-site}")
     private String webSite;
 
+    @Resource
+    private ApUserSearchService apUserSearchService;
+
     @Override
     public ResponseResult search(UserSearchDTO userSearchDto) {
 
@@ -52,6 +58,11 @@ public class ArticleSearchServiceImpl implements ArticleSearchService {
         // 2. 构建请求对象 SearchSourceBuilder
         SearchSourceBuilder builder = new SearchSourceBuilder();
 
+        // 登录用户ID
+        ApUser user = AppThreadLocalUtils.getUser();
+        // 在异步方法中无法获取当前线程中的用户信息
+        userSearchDto.setLoginUserId(user == null ? null : user.getId());
+        apUserSearchService.insert(userSearchDto);
         // 2.1 构建查询条件 builder.query
             // 2.1.1 构建bool查询条件
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -65,9 +76,9 @@ public class ArticleSearchServiceImpl implements ArticleSearchService {
         // 2.2.1 哪个字段高亮
         highlightBuilder.field("title");
             // 2.2.2 前置标签
-        highlightBuilder.preTags("<span>");
+        highlightBuilder.preTags("<font style='color: red; font-size: inherit;'>");
             //2.2.3 后置标签
-        highlightBuilder.postTags("</span>");
+        highlightBuilder.postTags("</font>");
         builder.highlighter(highlightBuilder);
         // 2.3 构建排序条件 builder.sort 发布时间降序 (默认: sort("publishTime", SortOrder.DESC))
         builder.sort("publishTime", SortOrder.DESC);
@@ -92,5 +103,15 @@ public class ArticleSearchServiceImpl implements ArticleSearchService {
         }
 
         return result;
+    }
+
+    @Override
+    public void saveArticle(SearchArticleVO article) {
+        esService.save(article,SearchConstants.ARTICLE_INDEX_NAME);
+    }
+
+    @Override
+    public void deleteArticle(String articleId) {
+        esService.deleteById(articleId,SearchConstants.ARTICLE_INDEX_NAME);
     }
 }

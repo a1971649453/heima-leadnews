@@ -3,7 +3,7 @@ spring:
     name: leadnews-user # 服务名称
   profiles:
     active: dev # 开发环境配置
-    ip: 192.168.200.130  # 环境ip地址
+    ip: 47.109.74.161  # 环境ip地址
   cloud:
     nacos:
       server-addr: ${spring.profiles.ip}:8848

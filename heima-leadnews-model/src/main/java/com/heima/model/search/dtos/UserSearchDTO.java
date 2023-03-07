@@ -18,8 +18,11 @@ public class UserSearchDTO {
     * 分页条数
     */
     int pageSize;
-    
-    Integer entryId;
+
+    /**
+     * 用户ID
+     */
+    Integer loginUserId;
     /**
     * 最小时间
     */

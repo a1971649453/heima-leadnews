@@ -17,6 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
+
         <!--mongoDB-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -27,6 +28,11 @@
             <groupId>com.heima</groupId>
             <artifactId>heima-es-spring-boot-starter</artifactId>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!--AMQP依赖，包含RabbitMQ-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
     </dependencies>
 </project>

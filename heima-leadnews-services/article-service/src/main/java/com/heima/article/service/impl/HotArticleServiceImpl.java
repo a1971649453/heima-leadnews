@@ -72,9 +72,9 @@ public class HotArticleServiceImpl implements HotArticleService {
         if (publishTime.equals(now)){
             score = score * 3;
         }
-        //5. TODO 更新当前文章所在的频道的缓存
+        //5. 更新当前文章所在的频道的缓存
         updateArticleCache(article, score, ArticleConstants.HOT_ARTICLE_FIRST_PAGE + article.getChannelId());
-        //6 TODO  更新推荐列表的缓存
+        //6   更新推荐列表的缓存
         updateArticleCache(article, score,  ArticleConstants.HOT_ARTICLE_FIRST_PAGE+ ArticleConstants.DEFAULT_TAG);
 
     }

@@ -4,8 +4,10 @@ import com.heima.feigns.ArticleFeign;
 import com.heima.feigns.WemediaFeign;
 import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.article.pojos.ApAuthor;
+
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.search.vos.SearchArticleVO;
 import com.heima.model.wemedia.pojos.WmUser;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,12 @@ public class ArticleFeignFallback implements FallbackFactory<ArticleFeign> {
                 return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
             }
             // ================新增降级方法  end ================
+
+            @Override
+            public ResponseResult<SearchArticleVO> findArticle(Long id) {
+                log.error(" 远程调用文章微服务  中  findArticle方法出错   ,  参数:{}      异常原因: {}",id,throwable.getCause());
+                return ResponseResult.errorResult(AppHttpCodeEnum.REMOTE_SERVER_ERROR,"远程调用查询Article出错,"+throwable.getMessage());
+            }
         };
     }
 }

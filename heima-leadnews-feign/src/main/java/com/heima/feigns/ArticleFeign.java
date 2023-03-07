@@ -1,13 +1,12 @@
 package com.heima.feigns;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.config.HeimaFeignAutoConfiguration;
 import com.heima.feigns.fallback.ArticleFeignFallback;
 import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
-import io.swagger.annotations.ApiOperation;
+import com.heima.model.search.vos.SearchArticleVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,4 +35,7 @@ public interface ArticleFeign  {
     @GetMapping("/api/v1/channel/channels")
     ResponseResult<List<AdChannel>> selectChannels();
     // ================新增接口方法  end ================
+
+    @GetMapping("/api/v1/article/{id}")
+    ResponseResult<SearchArticleVO> findArticle(@PathVariable("id") Long id);
 }
