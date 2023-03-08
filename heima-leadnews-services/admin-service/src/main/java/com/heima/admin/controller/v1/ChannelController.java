@@ -33,7 +33,7 @@ public class ChannelController {
     public ResponseResult findAll() {
         List<AdChannel> list = channelService.list();
         ResponseResult result = ResponseResult.okResult(list);
-        result.setErrorMessage("测试自动部署");
+        result.setErrorMessage("测试自动部署1");
         return result;
     }
 
