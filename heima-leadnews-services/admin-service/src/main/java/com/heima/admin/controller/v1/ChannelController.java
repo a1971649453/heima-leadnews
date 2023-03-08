@@ -32,7 +32,9 @@ public class ChannelController {
     @GetMapping("/channels")
     public ResponseResult findAll() {
         List<AdChannel> list = channelService.list();
-        return ResponseResult.okResult(list);
+        ResponseResult result = ResponseResult.okResult(list);
+        result.setErrorMessage("测试代码提交自动部署更新");
+        return result;
     }
 
     /**
