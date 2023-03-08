@@ -17,7 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <build>
-        <finalName>**heima-leadnews-article**</finalName>
+        <finalName>heima-leadnews-article</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
